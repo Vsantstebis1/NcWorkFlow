@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>NC Progress</title>
+  <style>
+    :root{
+      --bg:#0e141a; --s1:#212b36; --s2:#2a3642; --s3:#303d4a;
+      --b1:#3c4958; --b2:#4a5a6d;
+      --txt:#b6c3cd; --muted:#687c8d;
+      --accent:#1d91f1; --green:#34d399; --amber:#f59e0b; --red:#f87171;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    html,body{height:100%;overflow:hidden;}
+    body{font-family:'JetBrains Mono','Courier New',monospace;background:var(--bg);color:var(--txt);font-size:13px;display:flex;flex-direction:column;}
+
+    /* ── Header ── */
+    header{height:46px;background:var(--s1);border-bottom:1px solid var(--b1);display:flex;align-items:center;padding:0 16px;gap:10px;flex-shrink:0;}
+    .logo {
+      font-family: var(--head);
+      font-size: 17px;
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .vdiv{width:1px;height:18px;background:var(--b2);}
+    .btn{font-family:inherit;font-size:10px;padding:3px 10px;border-radius:4px;border:1px solid var(--b2);background:var(--s3);color:var(--muted);cursor:pointer;transition:all .15s;}
+    .btn:hover{border-color:var(--accent);color:var(--accent);}
+
+    /* ── Overview bar ── */
+    .overview{display:flex;gap:10px;padding:10px 16px;background:var(--s1);border-bottom:1px solid var(--b1);flex-shrink:0;}
+    .ov-card{flex:1;background:var(--s2);border:1px solid var(--b1);border-radius:6px;padding:10px 14px;display:flex;flex-direction:column;gap:6px;}
+    .ov-label{font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);}
+    .ov-row{display:flex;align-items:center;gap:8px;}
+    .ov-bar{flex:1;height:5px;background:var(--s3);border-radius:3px;overflow:hidden;}
+    .ov-fill{height:100%;border-radius:3px;transition:width .4s;}
+    .ov-pct{font-size:13px;font-weight:700;width:36px;text-align:right;flex-shrink:0;}
+    .ov-sub{font-size:13px;color:var(--muted);}
+
+    /* ── Toolbar ── */
+    .toolbar{display:flex;align-items:center;gap:5px;padding:7px 16px;border-bottom:1px solid var(--b1);flex-shrink:0;background:var(--bg);}
+    .fbtn{font-family:inherit;font-size:13px;padding:2px 9px;border-radius:4px;border:1px solid var(--b2);background:var(--s3);color:var(--muted);cursor:pointer;transition:all .15s;}
+    .fbtn:hover{border-color:var(--accent);color:var(--accent);}
+    .fbtn.active{border-color:var(--accent);color:var(--accent);background:rgba(29,145,241,.1);}
+    .toolbar-sep{width:1px;height:16px;background:var(--b2);margin:0 4px;}
+    .summary{margin-left:auto;font-size:13px;color:var(--muted);}
+
+    /* ── Content ── */
+    .content{flex:1;overflow-y:auto;padding:12px 16px;scrollbar-width:thin;scrollbar-color:var(--b2) transparent;}
+    .content::-webkit-scrollbar{width:3px;}
+    .content::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px;}
+
+    /* Section heading */
+    .section-hd{font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:13px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);padding:4px 0 8px;display:flex;align-items:center;gap:8px;margin-top:6px;}
+    .section-hd::after{content:'';flex:1;height:1px;background:var(--b1);}
+
+    /* ── Config validation grid ── */
+    .cfg-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:14px;}
+    .cfg-card{background:var(--s2);border:1px solid var(--b1);border-radius:6px;padding:10px 12px;cursor:pointer;transition:all .15s;position:relative;}
+    .cfg-card:hover{border-color:var(--b2);}
+    .cfg-card.validated{border-color:rgba(52,211,153,.4);background:rgba(52,211,153,.05);}
+    .cfg-card.validated::after{content:'✓';position:absolute;top:8px;right:10px;color:var(--green);font-size:13px;font-weight:700;}
+    .cfg-card.pending::after{content:'✗';position:absolute;top:8px;right:10px;color:var(--red);font-size:13px;}
+    .cfg-name{font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--txt);margin-bottom:3px;}
+    .cfg-status{font-size:13px;color:var(--muted);}
+    .cfg-card.validated .cfg-status{color:var(--green);}
+    .cfg-card.pending .cfg-status{color:var(--red);}
+
+    /* ── NC-Builder items ── */
+    .forma-block{margin-bottom:16px;}
+    .forma-hd{display:flex;align-items:center;gap:10px;margin-bottom:7px;padding-bottom:6px;border-bottom:1px solid var(--b1);}
+    .forma-name{font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:13px;font-weight:700;color:#d0dae3;letter-spacing:.04em;}
+    .pbar-wrap{flex:1;height:3px;background:var(--s3);border-radius:2px;overflow:hidden;}
+    .pbar-fill{height:100%;border-radius:2px;transition:width .3s;}
+    .pct{font-size:13px;color:var(--muted);width:28px;text-align:right;flex-shrink:0;}
+
+    .seq-block{margin-left:10px;margin-bottom:5px;border-left:2px solid var(--b1);padding-left:10px;}
+    .seq-hd{display:flex;align-items:center;gap:6px;padding:3px 0;}
+    .seq-label{font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:13px;font-weight:700;color:var(--muted);letter-spacing:.12em;}
+    .seq-name{font-size:13px;color:var(--txt);flex:1;}
+
+    /* Op items */
+    .op-item{border-radius:4px;background:var(--s2);border:1px solid var(--b1);margin-bottom:2px;overflow:hidden;transition:border-color .12s;}
+    .op-item:hover{border-color:var(--b2);}
+    .op-item.expanded{border-color:var(--b2);}
+    .op-row{display:flex;align-items:center;gap:6px;padding:4px 7px;cursor:pointer;}
+    .op-n{font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:13px;color:var(--muted);width:14px;text-align:right;flex-shrink:0;}
+    .op-name{flex:1;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .op-expand{font-size:13px;color:var(--muted);flex-shrink:0;transition:transform .15s;padding:0 2px;}
+    .op-item.expanded .op-expand{transform:rotate(90deg);}
+
+    /* Steps progress mini-bar on op row */
+    .op-steps-bar{width:36px;height:3px;background:var(--s3);border-radius:2px;overflow:hidden;flex-shrink:0;}
+    .op-steps-fill{height:100%;background:var(--green);border-radius:2px;}
+
+    /* Checklist */
+    .checklist{background:var(--s3);border-top:1px solid var(--b1);padding:8px 10px 8px 28px;}
+    .checklist-empty{font-size:13px;color:var(--muted);font-style:italic;padding:4px 0;}
+    .step-row{display:flex;align-items:center;gap:8px;padding:3px 0;}
+    .step-cb{width:13px;height:13px;border-radius:3px;border:1px solid var(--b2);background:var(--s2);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;}
+    .step-cb.checked{background:var(--green);border-color:var(--green);}
+    .step-cb.checked::after{content:'✓';font-size:8px;color:#0e141a;font-weight:700;}
+    .step-name{font-size:13px;color:var(--txt);}
+    .step-name.done{color:var(--muted);text-decoration:line-through;}
+
+    /* Badges */
+    .sbadge{font-size:11px;padding:1px 5px;border-radius:3px;font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-weight:700;letter-spacing:.04em;cursor:pointer;flex-shrink:0;border:1px solid;transition:all .12s;}
+    .sb-none{background:transparent;border-color:var(--b2);color:var(--muted);}
+    .sb-impl{background:rgba(245,158,11,.12);border-color:var(--amber);color:var(--amber);}
+    .sb-done{background:rgba(52,211,153,.12);border-color:var(--green);color:var(--green);}
+
+    /* Footer */
+    .sum-bar{height:30px;background:var(--s1);border-top:1px solid var(--b1);display:flex;align-items:center;padding:0 16px;gap:16px;flex-shrink:0;}
+    .sum-item{display:flex;align-items:center;gap:5px;font-size:13px;color:var(--muted);}
+    .sum-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
+
+    .empty-state{text-align:center;padding:40px 20px;color:var(--muted);line-height:2;}
+    .empty-state span{font-size:22px;display:block;margin-bottom:8px;opacity:.2;}
+  </style>
+  <script src="storage.js"></script>
+</head>
+<body>
+  <header>
+    <button class="btn" onclick="location.href='index.html'">← Menu</button>
+    <div class="logo">Progresso<em>·</em>Implementação</div>
+    <div class="vdiv"></div>
+    <span id="hd-count" style="font-size:13px;color:var(--muted)">—</span>
+  </header>
+
+  <!-- Overview -->
+  <div class="overview">
+    <div class="ov-card">
+      <div class="ov-label">Configurações</div>
+      <div class="ov-row">
+        <div class="ov-bar"><div class="ov-fill" id="ov-cfg-fill" style="background:var(--accent);width:0%"></div></div>
+        <span class="ov-pct" id="ov-cfg-pct" style="color:var(--accent)">0/5</span>
+      </div>
+      <div class="ov-sub" id="ov-cfg-sub">Nenhuma secção validada</div>
+    </div>
+    <div class="ov-card">
+      <div class="ov-label">NC-Builder — Operações</div>
+      <div class="ov-row">
+        <div class="ov-bar"><div class="ov-fill" id="ov-nc-fill" style="background:var(--green);width:0%"></div></div>
+        <span class="ov-pct" id="ov-nc-pct" style="color:var(--green)">0%</span>
+      </div>
+      <div class="ov-sub" id="ov-nc-sub">0 implementadas · 0 em curso · 0 pendentes</div>
+    </div>
+    <div class="ov-card" id="ov-steps-card" style="display:none">
+      <div class="ov-label">Regras Concluídas</div>
+      <div class="ov-row">
+        <div class="ov-bar"><div class="ov-fill" id="ov-st-fill" style="background:var(--amber);width:0%"></div></div>
+        <span class="ov-pct" id="ov-st-pct" style="color:var(--amber)">0%</span>
+      </div>
+      <div class="ov-sub" id="ov-st-sub">0 regras concluídas</div>
+    </div>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <button class="fbtn active" data-f="all"  onclick="setFilter('all')">Todos</button>
+    <button class="fbtn"        data-f="impl" onclick="setFilter('impl')">🟡 Em Impl.</button>
+    <button class="fbtn"        data-f="done" onclick="setFilter('done')">🟢 Implementado</button>
+    <button class="fbtn"        data-f="none" onclick="setFilter('none')">⚪ Pendente</button>
+    <div class="toolbar-sep"></div>
+    <button class="fbtn" id="btn-expand-all" onclick="toggleExpandAll()">▶ Expandir Todos</button>
+    <span class="summary" id="summary"></span>
+  </div>
+
+  <div class="content" id="content"></div>
+
+  <div class="sum-bar">
+    <div class="sum-item"><div class="sum-dot" style="background:var(--green)"></div><span id="s-done">—</span></div>
+    <div class="sum-item"><div class="sum-dot" style="background:var(--amber)"></div><span id="s-impl">—</span></div>
+    <div class="sum-item"><div class="sum-dot" style="background:var(--b2)"></div><span id="s-pend">—</span></div>
+    <div class="sum-item" style="margin-left:auto"><div class="sum-dot" style="background:var(--accent)"></div><span id="s-cfg">Configs: —</span></div>
+  </div>
+
+  <script>
+    // ── Constants ──
+    const STATUSES = [null,'impl','done'];
+    const LABEL = {impl:'IMPL.',done:'FEITO',null:'—'};
+    const cycle = cur => STATUSES[(STATUSES.indexOf(cur??null)+1)%3];
+    const esc = s => { const d=document.createElement('div'); d.textContent=String(s||''); return d.innerHTML; };
+
+    const CFG_KEYS = [
+      { key:'categorias', label:'Categorias' },
+      { key:'materiais',  label:'Materiais' },
+      { key:'qualidades', label:'Qualidades' },
+      { key:'worksteps',  label:'Etapas' },
+      { key:'cores',      label:'Cores / RGB' },
+    ];
+
+    // ── State ──
+    let data    = { formas: [] };
+    let cfgData = { validacoes: {}, worksteps: [] };
+    let filter  = 'all';
+    let expanded = new Set(); // op IDs currently expanded
+    let allExpanded = false;
+
+    // ── Data I/O ──
+    async function load() {
+      try { const d = await NCStorage.get('nc-wf-v1');    if (d) data    = d; } catch {}
+      try { const c = await NCStorage.get('nc_settings'); if (c) cfgData = c; } catch {}
+      cfgData.validacoes = cfgData.validacoes || {};
+      cfgData.worksteps  = cfgData.worksteps  || [];
+    }
+
+    function saveNC()  { NCStorage.set('nc-wf-v1',    data).catch(()=>{}); }
+    function saveCfg() { NCStorage.set('nc_settings', cfgData).catch(()=>{}); }
+
+    // ── Config validation ──
+    function toggleCfgVal(key) {
+      cfgData.validacoes[key] = !cfgData.validacoes[key];
+      saveCfg();
+      render();
+    }
+
+    // ── NC-Builder status ──
+    function toggleOp(fid, sid, oid) {
+      const op = getOp(fid, sid, oid);
+      if (op) { op.status = cycle(op.status??null); saveNC(); render(); }
+    }
+    function toggleSeq(fid, sid) {
+      const seq = getSeq(fid, sid);
+      if (seq) { seq.status = cycle(seq.status??null); saveNC(); render(); }
+    }
+
+    // ── Op regra completion ──
+    function toggleRegra(fid, sid, oid, rid) {
+      const op = getOp(fid, sid, oid);
+      if (!op) return;
+      if (!op.regraDone) op.regraDone = {};
+      op.regraDone[rid] = !op.regraDone[rid];
+      // Auto-update status
+      const regras = op.regras || [];
+      if (regras.length > 0) {
+        const allDone = regras.every(r => op.regraDone[r.id]);
+        const anyDone = regras.some(r => op.regraDone[r.id]);
+        op.status = allDone ? 'done' : anyDone ? 'impl' : null;
+      }
+      saveNC(); render();
+    }
+
+    // ── Expand / collapse ──
+    function toggleExpand(oid) {
+      if (expanded.has(oid)) expanded.delete(oid); else expanded.add(oid);
+      render();
+    }
+    function toggleExpandAll() {
+      allExpanded = !allExpanded;
+      document.getElementById('btn-expand-all').textContent = allExpanded ? '▼ Colapsar Todos' : '▶ Expandir Todos';
+      if (allExpanded) {
+        data.formas.forEach(f => f.sequencias.forEach(s => (s.operacoes||[]).forEach(o => expanded.add(o.id))));
+      } else { expanded.clear(); }
+      render();
+    }
+
+    // ── Helpers ──
+    function getOp(fid, sid, oid)  { return getSeq(fid,sid)?.operacoes?.find(o=>o.id===oid); }
+    function getSeq(fid, sid)       { return data.formas.find(f=>f.id===fid)?.sequencias.find(s=>s.id===sid); }
+    function matches(st) { if(filter==='all') return true; if(filter==='none') return !st; return st===filter; }
+
+    // ── Filter ──
+    function setFilter(f) {
+      filter = f;
+      document.querySelectorAll('.fbtn[data-f]').forEach(b => b.classList.toggle('active', b.dataset.f===f));
+      render();
+    }
+
+    // ── Render ──
+    function render() {
+      // ── Overview: Configs ──
+      const cfgDone  = CFG_KEYS.filter(c => cfgData.validacoes[c.key]).length;
+      const cfgTotal = CFG_KEYS.length;
+      const cfgPct   = Math.round(cfgDone / cfgTotal * 100);
+      document.getElementById('ov-cfg-fill').style.width = cfgPct + '%';
+      document.getElementById('ov-cfg-pct').textContent  = cfgDone + '/' + cfgTotal;
+      document.getElementById('ov-cfg-sub').textContent  = cfgDone === cfgTotal
+        ? 'Todas as secções validadas ✓'
+        : cfgDone === 0 ? 'Nenhuma secção validada' : cfgDone + ' de ' + cfgTotal + ' validadas';
+
+      // ── Overview: NC-Builder ──
+      const allOps  = data.formas.flatMap(f => f.sequencias.flatMap(s => s.operacoes||[]));
+      const ncTotal = allOps.length;
+      const ncDone  = allOps.filter(o => o.status==='done').length;
+      const ncImpl  = allOps.filter(o => o.status==='impl').length;
+      const ncPct   = ncTotal ? Math.round(ncDone / ncTotal * 100) : 0;
+      document.getElementById('ov-nc-fill').style.width = ncPct + '%';
+      document.getElementById('ov-nc-pct').textContent  = ncPct + '%';
+      document.getElementById('ov-nc-sub').textContent  = ncDone + ' implementadas · ' + ncImpl + ' em curso · ' + (ncTotal-ncDone-ncImpl) + ' pendentes';
+
+      // ── Overview: Regras ──
+      const allRegras   = allOps.flatMap(o => o.regras||[]);
+      const totalRegras = allRegras.length;
+      const doneRegras  = allOps.reduce((a,o) => a + (o.regras||[]).filter(r => o.regraDone?.[r.id]).length, 0);
+      if (totalRegras > 0) {
+        document.getElementById('ov-steps-card').style.display = '';
+        const stPct = Math.round(doneRegras / totalRegras * 100);
+        document.getElementById('ov-st-fill').style.width = stPct + '%';
+        document.getElementById('ov-st-pct').textContent  = stPct + '%';
+        document.getElementById('ov-st-sub').textContent  = doneRegras + '/' + totalRegras + ' regras concluídas';
+      } else {
+        document.getElementById('ov-steps-card').style.display = 'none';
+      }
+
+      // ── Footer summary ──
+      const pend = ncTotal - ncDone - ncImpl;
+      document.getElementById('hd-count').textContent = data.formas.length + ' forma' + (data.formas.length!==1?'s':'') + ' · ' + ncTotal + ' op.';
+      document.getElementById('s-done').textContent   = ncDone + ' implementad' + (ncDone!==1?'as':'a');
+      document.getElementById('s-impl').textContent   = ncImpl + ' em curso';
+      document.getElementById('s-pend').textContent   = pend   + ' pendente'  + (pend!==1?'s':'');
+      document.getElementById('s-cfg').textContent    = 'Configs: ' + cfgDone + '/' + cfgTotal;
+      document.getElementById('summary').textContent  = 'Filtro: ' + (filter==='all'?'todos':filter);
+
+      // ── Content ──
+      const el = document.getElementById('content');
+      let html = '';
+
+      // CONFIGS section
+      html += '<div class="section-hd">Configurações</div>';
+      html += '<div class="cfg-grid">';
+      CFG_KEYS.forEach(({ key, label }) => {
+        const ok = !!cfgData.validacoes[key];
+        html += `<div class="cfg-card ${ok?'validated':'pending'}" onclick="toggleCfgVal('${key}')">
+          <div class="cfg-name">${esc(label)}</div>
+          <div class="cfg-status">${ok ? 'Validado' : 'Por validar'}</div>
+        </div>`;
+      });
+      html += '</div>';
+
+      // NC-BUILDER section
+      html += '<div class="section-hd">NC-Builder</div>';
+
+      if (!data.formas.length) {
+        html += '<div class="empty-state"><span>⬡</span>Nenhuma forma encontrada.<br>Crie formas no NC-Set Builder primeiro.</div>';
+      } else {
+        let anyVisible = false;
+
+        data.formas.forEach(forma => {
+          const formaOps = forma.sequencias.flatMap(s => s.operacoes||[]);
+          const fDone    = formaOps.filter(o => o.status==='done').length;
+
+          // Check filter visibility
+          let vis = filter==='all';
+          if (!vis) forma.sequencias.forEach(s => {
+            if (matches(s.status)) vis = true;
+            (s.operacoes||[]).forEach(o => { if (matches(o.status)) vis = true; });
+          });
+          if (!vis) return;
+          anyVisible = true;
+
+          const pct = formaOps.length ? Math.round(fDone/formaOps.length*100) : 0;
+          // progress bar color
+          const barColor = pct===100 ? 'var(--green)' : pct>0 ? 'var(--amber)' : 'var(--b2)';
+
+          html += `<div class="forma-block">
+            <div class="forma-hd">
+              <span class="forma-name">${esc(forma.nome)}</span>
+              <div class="pbar-wrap"><div class="pbar-fill" style="width:${pct}%;background:${barColor}"></div></div>
+              <span class="pct">${pct}%</span>
+            </div>`;
+
+          forma.sequencias.forEach((seq, si) => {
+            const ops    = seq.operacoes || [];
+            const visOps = filter==='all' ? ops : ops.filter(o => matches(o.status));
+            if (filter!=='all' && !matches(seq.status) && visOps.length===0) return;
+
+            const sc = seq.status||'none';
+            html += `<div class="seq-block">
+              <div class="seq-hd">
+                <span class="seq-label">S${si+1}</span>
+                <span class="seq-name">${esc(seq.nome)}</span>
+                <span class="sbadge sb-${sc}" onclick="toggleSeq('${forma.id}','${seq.id}')">${LABEL[sc]||'—'}</span>
+              </div>`;
+
+            visOps.forEach((op, i) => {
+              const st      = op.status||'none';
+              const isExp   = expanded.has(op.id);
+              const regras  = op.regras || [];
+              const nRegras = regras.length;
+              const nDone   = regras.filter(r => op.regraDone?.[r.id]).length;
+              const sPct    = nRegras ? Math.round(nDone/nRegras*100) : 0;
+
+              html += `<div class="op-item${isExp?' expanded':''}">
+                <div class="op-row" onclick="toggleExpand('${op.id}')">
+                  <span class="op-n">${i+1}</span>
+                  <span class="op-name">${esc(op.nome)}</span>`;
+
+              if (nRegras > 0) {
+                html += `<div class="op-steps-bar" title="${nDone}/${nRegras} regras">
+                  <div class="op-steps-fill" style="width:${sPct}%"></div>
+                </div>`;
+              }
+
+              html += `<span class="sbadge sb-${st}" onclick="event.stopPropagation();toggleOp('${forma.id}','${seq.id}','${op.id}')">${LABEL[st]||'—'}</span>
+                  <span class="op-expand">▶</span>
+                </div>`;
+
+              if (isExp) {
+                html += '<div class="checklist">';
+                if (nRegras === 0) {
+                  html += '<div class="checklist-empty">Sem regras definidas — adicione regras nesta operação no NC-Set Builder</div>';
+                } else {
+                  regras.forEach(r => {
+                    const done = !!op.regraDone?.[r.id];
+                    const label = `${r.campo} ${r.operador} ${r.valor}`;
+                    html += `<div class="step-row">
+                      <div class="step-cb ${done?'checked':''}" onclick="toggleRegra('${forma.id}','${seq.id}','${op.id}','${r.id}')"></div>
+                      <span class="step-name${done?' done':''}">${esc(label)}</span>
+                    </div>`;
+                  });
+                }
+                html += '</div>';
+              }
+
+              html += '</div>';
+            });
+
+            html += '</div>'; // seq-block
+          });
+
+          html += '</div>'; // forma-block
+        });
+
+        if (!anyVisible) {
+          html += '<div class="empty-state"><span>🔍</span>Nenhum item corresponde ao filtro.</div>';
+        }
+      }
+
+      el.innerHTML = html;
+    }
+
+    // Init
+    load().then(render);
+    setInterval(() => load().then(render), 12000);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) load().then(render); });
+  </script>
+</body>
+</html>

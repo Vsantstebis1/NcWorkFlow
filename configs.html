@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <title>NC Configs - Visão Global</title>
+  <style>
+    :root {
+      --bg: #0e141a; --s1: #1a222a; --s2: #212b36;
+      --accent: #1d91f1; --txt: #b6c3cd; --muted: #687c8d;
+      --red: #f87171; --border: #3c4958;
+    }
+    body {
+      background: var(--bg); color: var(--txt);
+      font-family: 'JetBrains Mono', 'Courier New', Courier, monospace; margin: 0;
+      display: flex; flex-direction: column; height: 100vh; overflow: hidden;
+    }
+    header {
+      height: 60px; background: var(--s1); border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 30px; justify-content: space-between;
+    }
+    .header-actions { display: flex; gap: 10px; align-items: center; }
+    .logo { font-size: 20px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+    .dashboard {
+      display: grid; grid-template-columns: repeat(5, 1fr);
+      gap: 20px; padding: 25px; flex: 1; overflow-y: auto;
+    }
+    .config-card { background: var(--s2); border: 1px solid var(--border); border-radius: 8px; display: flex; flex-direction: column; height: 100%; }
+    .card-hd {
+      padding: 15px; background: rgba(255,255,255,0.03); border-bottom: 1px solid var(--border);
+      font-family: 'Barlow Condensed','Arial Narrow',Arial,sans-serif; font-size: 16px; font-weight: 700; color: var(--accent);
+      text-transform: uppercase; display: flex; align-items: center;
+    }
+    .card-body { flex: 1; padding: 10px; overflow-y: auto; min-height: 250px; }
+    .list-item { display: flex; align-items: center; gap: 8px; padding: 8px; border-bottom: 1px solid #303d4a; font-size: 12px; }
+    .card-footer { padding: 15px; border-top: 1px solid var(--border); background: var(--s1); }
+    .input-group { display: flex; gap: 5px; }
+    input, select {
+      background: var(--bg); border: 1px solid var(--border); color: var(--txt);
+      padding: 8px; border-radius: 4px; font-family: inherit; font-size: 11px; flex: 1; outline: none;
+    }
+    .btn { font-family: inherit; font-size: 13px; padding: 5px 12px; border-radius: 4px; border: 1px solid var(--border); background: var(--s2); color: var(--txt); cursor: pointer; transition: all .15s; }
+    .btn:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-add-sm { background: var(--accent); color: white; border: none; padding: 0 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+    .btn-del { color: var(--red); cursor: pointer; background: none; border: none; margin-left: auto; }
+    .color-swatch { width: 16px; height: 16px; border-radius: 3px; border: 1px solid #fff2; }
+    .btn-back {
+      background: transparent; color: var(--accent); border: 1px solid var(--accent);
+      padding: 8px 20px; border-radius: 4px; cursor: pointer;
+      font-family: 'Barlow Condensed','Arial Narrow',Arial,sans-serif;
+      font-weight: 700; text-transform: uppercase;
+    }
+    .val-btn { margin-left: auto; font-size: 9px; padding: 2px 8px; border-radius: 3px; border: 1px solid; cursor: pointer; font-family: inherit; font-weight: 700; letter-spacing: .04em; transition: all .15s; white-space: nowrap; }
+    .val-yes { background: rgba(52,211,153,.12); border-color: #34d399; color: #34d399; }
+    .val-no  { background: rgba(248,113,113,.08); border-color: var(--red); color: var(--red); }
+    .saving-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); opacity: 0; transition: opacity .3s; margin-left: 8px; flex-shrink: 0; }
+    .saving-dot.active { opacity: 1; }
+  </style>
+</head>
+<body>
+  <header>
+    <button class="btn" onclick="location.href='index.html'">← Menu</button>
+    <div class="logo">Configurações Globais <span class="saving-dot" id="saving-dot"></span></div>
+    <div class="header-actions">
+      <input type="file" id="import-file" style="display:none" accept=".json" onchange="importJSON(event)">
+      <button class="btn-back" onclick="document.getElementById('import-file').click()">↑ Importar JSON</button>
+      <button class="btn-back" onclick="exportJSON()">↓ Exportar JSON</button>
+      <button class="btn-back" style="background:var(--accent);color:white;" onclick="location.href='index.html'">Gravar e Sair</button>
+    </div>
+  </header>
+
+  <div class="dashboard">
+    <div class="config-card">
+      <div class="card-hd">Categorias de Processo<button class="val-btn val-no" id="val-categorias" onclick="toggleVal('categorias')">✗ Por validar</button></div>
+      <div class="card-body" id="list-categorias"></div>
+      <div class="card-footer"><div class="input-group"><input type="text" id="in-categorias" placeholder="Ex: Desbaste..."><button class="btn-add-sm" onclick="addItem('categorias')">+</button></div></div>
+    </div>
+    <div class="config-card">
+      <div class="card-hd">Materiais<button class="val-btn val-no" id="val-materiais" onclick="toggleVal('materiais')">✗ Por validar</button></div>
+      <div class="card-body" id="list-materiais"></div>
+      <div class="card-footer"><div class="input-group"><input type="text" id="in-materiais" placeholder="Ex: Alumínio..."><button class="btn-add-sm" onclick="addItem('materiais')">+</button></div></div>
+    </div>
+    <div class="config-card">
+      <div class="card-hd">Qualidades (Tolerâncias)<button class="val-btn val-no" id="val-qualidades" onclick="toggleVal('qualidades')">✗ Por validar</button></div>
+      <div class="card-body" id="list-qualidades"></div>
+      <div class="card-footer"><div class="input-group"><input type="text" id="in-qualidades" placeholder="Ex: H7, H11..."><button class="btn-add-sm" onclick="addItem('qualidades')">+</button></div></div>
+    </div>
+    <div class="config-card">
+      <div class="card-hd">Etapas de Trabalho<button class="val-btn val-no" id="val-worksteps" onclick="toggleVal('worksteps')">✗ Por validar</button></div>
+      <div class="card-body" id="list-worksteps"></div>
+      <div class="card-footer"><div class="input-group"><input type="text" id="in-worksteps" placeholder="Ex: Só escarear..."><button class="btn-add-sm" onclick="addItem('worksteps')">+</button></div></div>
+    </div>
+    <div class="config-card">
+      <div class="card-hd">Identidade Visual (RGB)<button class="val-btn val-no" id="val-cores" onclick="toggleVal('cores')">✗ Por validar</button></div>
+      <div class="card-body" id="list-cores"></div>
+      <div class="card-footer">
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <select id="sel-qual-color" onchange="toggleManualInput(this.value)">
+            <option value="">-- Selecionar Qualidade --</option>
+            <option value="MANUAL_SPECIAL">Nova Tolerância (Manual)...</option>
+          </select>
+          <div id="manual-qual-container" style="display:none;">
+            <input type="text" id="in-manual-qual-name" placeholder="Nome da tolerância especial..." style="width:100%;border-color:var(--accent);">
+          </div>
+          <div class="input-group">
+            <input type="color" id="in-color-val" value="#1d91f1" style="width:45px;flex:none;padding:2px;">
+            <button class="btn-add-sm" style="flex:1" onclick="addColor()">VINCULAR COR</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="storage.js"></script>
+  <script>
+    const DEFAULTS = { categorias:["Desbaste","Acabamento"], materiais:["Aço","Alumínio"], qualidades:["H7","H11"], worksteps:[], cores:[], validacoes:{} };
+    let configData = { ...DEFAULTS };
+    let _saveTimer = null;
+
+    function flashSave() {
+      const dot = document.getElementById('saving-dot');
+      dot.classList.add('active');
+      clearTimeout(_saveTimer);
+      _saveTimer = setTimeout(() => dot.classList.remove('active'), 800);
+    }
+
+    function saveData() {
+      NCStorage.set('nc_settings', configData).then(flashSave).catch(() => {});
+      renderAll();
+    }
+
+    function toggleVal(key) { configData.validacoes[key] = !configData.validacoes[key]; saveData(); }
+    function toggleManualInput(val) {
+      document.getElementById('manual-qual-container').style.display = val === 'MANUAL_SPECIAL' ? 'block' : 'none';
+      if (val === 'MANUAL_SPECIAL') document.getElementById('in-manual-qual-name').focus();
+    }
+
+    function addItem(key) {
+      const input = document.getElementById('in-' + key);
+      const val = input.value.trim();
+      if (val && !configData[key].includes(val)) { configData[key].push(val); input.value = ''; saveData(); }
+    }
+
+    function addColor() {
+      const sel = document.getElementById('sel-qual-color');
+      const colorVal = document.getElementById('in-color-val').value;
+      let qualName = sel.value;
+      if (qualName === 'MANUAL_SPECIAL') qualName = document.getElementById('in-manual-qual-name').value.trim();
+      if (qualName && qualName !== 'MANUAL_SPECIAL') {
+        configData.cores.push({ id: Date.now(), qual: qualName, color: colorVal, ct: '' });
+        document.getElementById('in-manual-qual-name').value = '';
+        sel.value = ''; toggleManualInput('');
+        saveData();
+      }
+    }
+
+    function deleteItem(key, index) { configData[key].splice(index, 1); saveData(); }
+
+    function updateCT(index, value) {
+      configData.cores[index].ct = value;
+      NCStorage.set('nc_settings', configData).catch(() => {});
+    }
+
+    function deleteColor(index) { configData.cores.splice(index, 1); saveData(); }
+
+    function exportJSON() {
+      const a = document.createElement('a');
+      a.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(configData, null, 2));
+      a.download = 'nc_settings.json'; a.click();
+    }
+
+    function importJSON(event) {
+      const file = event.target.files[0]; if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (imported.categorias && imported.materiais) { configData = imported; saveData(); alert('Importado com sucesso!'); }
+          else alert('Formato JSON inválido.');
+        } catch { alert('Erro ao ler ficheiro.'); }
+      };
+      reader.readAsText(file);
+    }
+
+    function renderAll() {
+      const toRGB = c => {
+        if (!c) return ''; if (c.startsWith('rgb')) return c;
+        let h = c.replace('#',''); if (h.length===3) h=h.split('').map(s=>s+s).join('');
+        return `rgb(${parseInt(h.slice(0,2),16)},${parseInt(h.slice(2,4),16)},${parseInt(h.slice(4,6),16)})`;
+      };
+
+      ['categorias','materiais','qualidades','worksteps'].forEach(key => {
+        const el = document.getElementById('list-' + key); if (!el) return;
+        el.innerHTML = (configData[key]||[]).map((item,i) =>
+          `<div class="list-item"><span>${item}</span><button class="btn-del" onclick="deleteItem('${key}',${i})">×</button></div>`
+        ).join('');
+      });
+
+      const cc = document.getElementById('list-cores');
+      if (cc) {
+        if (!Array.isArray(configData.cores)) configData.cores = [];
+        const list = configData.cores.map((item,i) => ({...item, oi:i}))
+          .sort((a,b) => (a.ct||'').localeCompare(b.ct||'', undefined, {numeric:true}));
+        cc.innerHTML = list.map(item => `
+          <div class="list-item" style="gap:10px;display:flex;align-items:center;">
+            <div class="color-swatch" style="background:${item.color};width:18px;height:18px;flex:none;"></div>
+            <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+              <span style="font-weight:bold;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.qual}</span>
+              <small style="color:var(--muted);font-size:9px;">${toRGB(item.color)}</small>
+            </div>
+            <input type="text" placeholder="CT" value="${item.ct||''}" oninput="updateCT(${item.oi},this.value)"
+                   style="width:45px;flex:none;height:20px;background:#000;border:1px solid var(--border);text-align:center;color:var(--accent);font-size:10px;">
+            <button class="btn-del" onclick="deleteColor(${item.oi})" style="margin-left:5px;">×</button>
+          </div>`).join('');
+      }
+
+      const sel = document.getElementById('sel-qual-color');
+      if (sel) {
+        const cv = sel.value;
+        sel.innerHTML = `<option value="">-- Selecionar Qualidade --</option><option value="MANUAL_SPECIAL">Nova Tolerância (Manual)...</option>
+          ${(configData.qualidades||[]).map(q=>`<option value="${q}">${q}</option>`).join('')}`;
+        sel.value = cv;
+      }
+
+      ['categorias','materiais','qualidades','worksteps','cores'].forEach(key => {
+        const btn = document.getElementById('val-' + key); if (!btn) return;
+        const ok = !!configData.validacoes[key];
+        btn.className = 'val-btn ' + (ok ? 'val-yes' : 'val-no');
+        btn.textContent = ok ? '✓ Validado' : '✗ Por validar';
+      });
+    }
+
+    // ── Init: load from NCStorage ──
+    NCStorage.get('nc_settings').then(stored => {
+      if (stored) configData = stored;
+      configData.worksteps  = configData.worksteps  || [];
+      configData.cores      = Array.isArray(configData.cores) ? configData.cores : [];
+      configData.categorias = configData.categorias || [];
+      configData.materiais  = configData.materiais  || [];
+      configData.qualidades = configData.qualidades || [];
+      configData.validacoes = configData.validacoes || {};
+      renderAll();
+    }).catch(() => renderAll());
+
+    // Live-sync every 10s (picks up changes from other users in Electron)
+    setInterval(() => {
+      NCStorage.get('nc_settings').then(fresh => {
+        if (!fresh) return;
+        if (JSON.stringify(fresh) !== JSON.stringify(configData)) { configData = fresh; renderAll(); }
+      }).catch(() => {});
+    }, 10000);
+  </script>
+</body>
+</html>

@@ -143,43 +143,42 @@
 <body>
 <div class="shell">
 
-    <!-- ── LEFT ── -->
     <div class="left">
-        <div class="eyebrow">Workflow Implementação</div>
+        <div class="eyebrow">Workflow Implementation</div>
         <div class="logo">Dashboard</div>
-		<div class="logo">Implementação</div>
-		        <div class="tagline">Definição de sequências<br>Operações de Maquinação · Config. global</div>
+		<div class="logo">Implementation</div>
+		        <div class="tagline">Definition of sequences<br>Machining Operations · Global Config</div>
 
         <div class="menu-grid">
             <a id="btn-planeamento" href="#" class="menu-item">
 				<span class="mi-icon">🗺️</span>
 					<div class="mi-text">
 						<div class="mi-title">Planeamento</div>
-						<div class="mi-desc">PDF com ações, Milestones</div>
+						<div class="mi-desc">PDF with actions, Milestones</div>
 					</div>
 				<span class="mi-tag">LIVE</span>
 			</a>
-			<a href="nc-builder.html" class="menu-item">
+			<a id="btn-builder" href="nc-builder.html" class="menu-item">
                 <span class="mi-icon">⚙️</span>
                 <div class="mi-text">
                     <div class="mi-title">NC-Set Builder</div>
-                    <div class="mi-desc">Sequências, formas e operações</div>
+                    <div class="mi-desc">Sequences, shapes and operations</div>
                 </div>
                 <span class="mi-tag">LIVE</span>
             </a>
             <a href="configs.html" class="menu-item">
                 <span class="mi-icon">🛠️</span>
                 <div class="mi-text">
-                    <div class="mi-title">Configurações</div>
-                    <div class="mi-desc">Materiais, qualidades, identidade visual</div>
+                    <div class="mi-title">Configurations</div>
+                    <div class="mi-desc">Materials, qualities, visual identity</div>
                 </div>
                 <span class="mi-tag">LIVE</span>
             </a>
             <a href="progress.html" class="menu-item">
                 <span class="mi-icon">📈</span>
                 <div class="mi-text">
-                    <div class="mi-title">Progresso Detalhado</div>
-                    <div class="mi-desc">Vista completa de implementação</div>
+                    <div class="mi-title">Detailed Progress</div>
+                    <div class="mi-desc">Full implementation view</div>
                 </div>
                 <span class="mi-tag">LIVE</span>
             </a>
@@ -187,26 +186,25 @@
                 <span class="mi-icon">💾</span>
                 <div class="mi-text">
                     <div class="mi-title">Backup / Sync</div>
-                    <div class="mi-desc">Base de dados externa</div>
+                    <div class="mi-desc">External database</div>
                 </div>
-                <span class="mi-tag soon">EM BREVE</span>
+                <span class="mi-tag soon">COMING SOON</span>
             </div>
         </div>
 
-        <div class="version">Implementa_dashboard v0.3 // LOCAL STORAGE</div>
+        <div class="version">Implementa_dashboard v0.3 // WEB STORAGE</div>
     </div>
 
-    <!-- ── RIGHT: Progress ── -->
     <div class="right">
         <div class="right-hd">
-            <span class="right-title">Vista de Progresso</span>
+            <span class="right-title">Progress View</span>
             <div class="vdiv"></div>
             <span class="hd-count" id="hd-count">—</span>
             <div class="hd-filters">
-                <button class="fbtn active" data-f="all"  onclick="setFilter('all')">Todos</button>
+                <button class="fbtn active" data-f="all"  onclick="setFilter('all')">All</button>
                 <button class="fbtn"        data-f="impl" onclick="setFilter('impl')">🟡 Impl.</button>
-                <button class="fbtn"        data-f="done" onclick="setFilter('done')">🟢 Feito</button>
-                <button class="fbtn"        data-f="none" onclick="setFilter('none')">⚪ Pendente</button>
+                <button class="fbtn"        data-f="done" onclick="setFilter('done')">🟢 Done</button>
+                <button class="fbtn"        data-f="none" onclick="setFilter('none')">⚪ Pending</button>
             </div>
         </div>
 
@@ -362,6 +360,17 @@
                     }
                 }
             }).catch(err => console.error("Erro na leitura do planeamento:", err));
+        }
+    </script>
+    <script>
+        // Garante que o link para o construtor/builder mantém o cliente atual do URL
+        const paramsAtuais = new URLSearchParams(window.location.search);
+        const clienteAtual = paramsAtuais.get('cliente');
+        if (clienteAtual) {
+            const btnBuilder = document.getElementById('btn-builder');
+            if (btnBuilder) {
+                btnBuilder.href = `nc-builder.html?cliente=${clienteAtual}`;
+            }
         }
     </script>
 </body>
